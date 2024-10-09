@@ -16,17 +16,9 @@ datasource db {
 }
 
 model User {
-  id          Int        @id @default(autoincrement())
-  username    String     @unique
-  hash        String     @unique
-  salt        String     @unique
-  name        String     @default("NA")
-  avatar      String     @default("none")
-  lobby       Lobby      @relation("Lobby", fields: [id], references: [id])
-}
-
-model Lobby {
-  id          Int        @id @default(autoincrement())
-  name        String     @default("lobby")
-  players     User[]     @relation("Lobby")
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 }
