@@ -1,14 +1,26 @@
 import express, { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { Server } from "socket.io";
+import http from "http";
+import cors from "cors";
 
 const app = express();
 const prisma = new PrismaClient();
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true, 
+  },
+});
+
+app.use(cors()); 
 app.use(express.json());
 
 app.post("/signup", async (req: Request, res: Response) => {
-console.log("hello")
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
@@ -25,6 +37,10 @@ console.log("hello")
       },
     });
 
+    const users = await prisma.user.findMany();
+    const userNames = users.map((user) => user.name);
+    io.emit("userListUpdate", userNames);
+
     return res.status(201).json({ message: "User created", user });
   } catch (error) {
     if (error instanceof Error) {
@@ -37,7 +53,15 @@ console.log("hello")
   }
 });
 
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
