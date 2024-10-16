@@ -4,6 +4,18 @@ import bcrypt from "bcrypt";
 import { Server } from "socket.io";
 import http from "http";
 import cors from "cors";
+import jwt from "jsonwebtoken";
+
+interface DecodedToken {
+  id: number;   // Example: assuming the token contains a user id
+  email: string;
+  // Add other fields as needed, depending on your token payload
+}
+
+// Extend the default Request type to include the `user` property
+interface AuthenticatedRequest extends Request {
+  user?: DecodedToken;
+}
 
 const app = express();
 const prisma = new PrismaClient();
@@ -20,7 +32,30 @@ const io = new Server(server, {
 app.use(cors()); 
 app.use(express.json());
 
-app.post("/signup", async (req: Request, res: Response) => {
+const verifyToken = (req: AuthenticatedRequest, res: Response, next: express.NextFunction) => {
+  const authHeader = req.headers['authorization'];
+
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1]
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid token format' });
+  }
+
+  jwt.verify(token, 'secret', (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Unauthorized: Token verification failed' });
+    }
+    
+    req.user = decoded as DecodedToken;
+    next();
+  });
+};
+
+app.post("/signup", async (req: Request, res: Response)  => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
