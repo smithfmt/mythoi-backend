@@ -21,4 +21,16 @@ model User {
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
+
+  lobbyId   Int? 
+  lobby     Lobby?   @relation(fields: [lobbyId], references: [id])
+}
+
+model Lobby {
+  id        Int      @id @default(autoincrement())
+  name      String   @default("lobby")
+  createdAt DateTime @default(now())
+  started   Boolean  @default(false)
+  players   User[]
+  maxPlayers Int     @default(2)
 }

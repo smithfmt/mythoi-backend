@@ -3,6 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import { userRoutes } from "./routes/userRoutes";
+import { lobbyRoutes } from "./routes/lobbyRoutes";
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +22,7 @@ app.use(express.json());
 
 // Setup routes
 app.use("/api/users", userRoutes(io));
+app.use("/api/lobbies", lobbyRoutes(io));
 
 // Socket connection
 io.on("connection", (socket) => {
