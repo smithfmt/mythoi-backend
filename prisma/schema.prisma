@@ -33,4 +33,5 @@ model Lobby {
   started   Boolean  @default(false)
   players   User[]
   maxPlayers Int     @default(2)
+  host      Int
 }

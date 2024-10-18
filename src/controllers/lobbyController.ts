@@ -1,11 +1,7 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import { Server } from "socket.io";
-import dotenv from "dotenv";
-dotenv.config();
-
-const JWT_SECRET = process.env.JWT_SECRET;
 
 const updateLobbyList = async (io: Server) => {
     const lobbyData = await prisma.lobby.findMany();
@@ -14,16 +10,16 @@ const updateLobbyList = async (io: Server) => {
 };
 
 // Create a new lobby and add the user to the lobby
-export const createLobby = async (req: Request, res: Response, io: Server) => {
-    const {userId, name} = req.body; // Make sure to get the user ID from the request
-    if (!userId) {
+export const createLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
+    const { user, name} = req.body; // Make sure to get the user ID from the request
+    if (!user?.id) {
       return res.status(400).json({ message: "User ID is required." });
     }
 
   try {
     // Check if the user is already in a lobby
     const userInLobby = await prisma.lobby.findFirst({
-      where: { players: { some: { id: userId } } },
+      where: { players: { some: { id: user.id } } },
     });
 
     if (userInLobby) {
@@ -33,9 +29,10 @@ export const createLobby = async (req: Request, res: Response, io: Server) => {
     // Create a new lobby and add the user
     const lobby = await prisma.lobby.create({
       data: {
-        players: { connect: { id: userId } },
+        players: { connect: { id: user.id } },
         name,
         started: false,
+        host: user.id,
       },
     });
 
@@ -52,8 +49,8 @@ export const createLobby = async (req: Request, res: Response, io: Server) => {
 };
 
 
-export const joinLobby = async (req: Request, res: Response, io: Server) => {
-  const { lobbyId, userId } = req.body;
+export const joinLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
+  const { lobbyId, user } = req.body;
 
   try {
     // Check if the lobby exists
@@ -67,7 +64,7 @@ export const joinLobby = async (req: Request, res: Response, io: Server) => {
 
     // Check if the user is already in another lobby
     const userInLobby = await prisma.lobby.findFirst({
-      where: { players: { some: { id: userId } } },
+      where: { players: { some: { id: user.id } } },
     });
 
     if (userInLobby) {
@@ -78,7 +75,7 @@ export const joinLobby = async (req: Request, res: Response, io: Server) => {
     await prisma.lobby.update({
       where: { id: lobbyId },
       data: {
-        players: { connect: { id: userId } },
+        players: { connect: { id: user.id } },
       },
     });
 
@@ -94,7 +91,55 @@ export const joinLobby = async (req: Request, res: Response, io: Server) => {
   }
 };
 
-export const getAllLobbies = async (req: Request, res: Response) => {
+export const leaveLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
+  const { user } = req.body;
+  if (!user) return res.status(404).json({ message: "No user found" });
+  try {
+    // Check if the user is in a lobby
+    const userLobby = await prisma.lobby.findFirst({
+      where: { players: { some: { id: user.id } } },
+    });
+
+    if (!userLobby) {
+      return res.status(404).json({ message: "User is not in any lobby" });
+    }
+
+    // Remove the user from the lobby
+    await prisma.lobby.update({
+      where: { id: userLobby.id },
+      data: {
+        players: {
+          disconnect: { id: user.id },
+        },
+      },
+    });
+
+    // If the user was the last player, delete the lobby
+    const remainingPlayers = await prisma.lobby.findUnique({
+      where: { id: userLobby.id },
+      include: { players: true },
+    });
+
+    if (remainingPlayers && remainingPlayers.players.length === 0) {
+      await prisma.lobby.delete({
+        where: { id: userLobby.id },
+      });
+    }
+
+    await updateLobbyList(io); // Update the lobby list for all clients
+
+    return res.status(200).json({ message: "Left the lobby successfully" });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return res.status(500).json({ message: error.message });
+    } else {
+      return res.status(500).json({ message: 'An unknown error occurred' });
+    }
+  }
+};
+
+
+export const getAllLobbies = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const lobbies = await prisma.lobby.findMany({
       where: { started: false },
@@ -111,7 +156,7 @@ export const getAllLobbies = async (req: Request, res: Response) => {
   }
 };
 
-export const getLobby = async (req: Request, res: Response) => {
+export const getLobby = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   try {
     const lobby = await prisma.lobby.findUnique({
@@ -133,12 +178,12 @@ export const getLobby = async (req: Request, res: Response) => {
   }
 };
 
-export const startLobby = async (req: Request, res: Response, io: Server) => {
-    const { lobbyId } = req.body;
+export const startLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
+    const { lobbyId, user } = req.body;
   
     try {
       const lobby = await prisma.lobby.update({
-        where: { id: lobbyId },
+        where: { id: lobbyId, players: { some: { id: user.id } } },
         data: { started: true },
       });
   
@@ -150,12 +195,13 @@ export const startLobby = async (req: Request, res: Response, io: Server) => {
     }
   };
 
-export const deleteLobby = async (req: Request, res: Response, io: Server) => {
-  const { lobbyId } = req.params;
+export const deleteLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
+  const { id } = req.params;
+  const { user } = req.body
 
   try {
     await prisma.lobby.delete({
-      where: { id: Number(lobbyId) },
+      where: { id: Number(id), host: user.id },
     });
 
     await updateLobbyList(io);
@@ -170,7 +216,7 @@ export const deleteLobby = async (req: Request, res: Response, io: Server) => {
   }
 };
 
-export const deleteAllLobbies = async (req: Request, res: Response, io: Server) => {
+export const deleteAllLobbies = async (req: AuthenticatedRequest, res: Response, io: Server) => {
   try {
     await prisma.lobby.deleteMany();
 
@@ -186,7 +232,7 @@ export const deleteAllLobbies = async (req: Request, res: Response, io: Server) 
   }
 };
 
-export const deleteStartedLobbies = async (req: Request, res: Response, io: Server) => {
+export const deleteStartedLobbies = async (req: AuthenticatedRequest, res: Response, io: Server) => {
   try {
     await prisma.lobby.deleteMany({
       where: { started: true },
