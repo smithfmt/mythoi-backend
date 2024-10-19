@@ -90,13 +90,14 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const getUserProfile = async (req: AuthenticatedRequest, res: Response) => {
-  if (!req.user) {
+  const { user } = req.body;
+  if (!user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+    const profile = await prisma.user.findUnique({
+      where: { id: user.id },
       select: {
         id: true,
         name: true,
@@ -104,11 +105,11 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
       },
     });
 
-    if (!user) {
+    if (!profile) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.status(200).json({ message: "User profile retrieved", user });
+    return res.status(200).json({ message: "User profile retrieved", profile });
   } catch (error) {
     return res.status(500).json({ message: "An unexpected error occurred" });
   }
