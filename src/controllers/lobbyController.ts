@@ -2,6 +2,7 @@ import { Response } from "express";
 import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import { Server } from "socket.io";
+import { createGame } from "./gameController";
 
 const updateLobbyList = async (io: Server) => {
     const lobbyData = await prisma.lobby.findMany();
@@ -179,21 +180,29 @@ export const getLobby = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 export const startLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
-    const { lobbyId, user } = req.body;
-  
-    try {
-      const lobby = await prisma.lobby.update({
-        where: { id: lobbyId, players: { some: { id: user.id } } },
-        data: { started: true },
-      });
-  
-      await updateLobbyList(io);
+  const { lobbyId, user } = req.body;
 
-      return res.status(200).json(lobby);
-    } catch (error) {
-      return res.status(500).json({ message: 'Error starting lobby', error });
-    }
-  };
+  try {
+    // Find and update the lobby to started
+    const lobby = await prisma.lobby.update({
+      where: { id: parseInt(lobbyId), players: { some: { id: user.id } } },
+      include: { players: true },
+      data: { started: true },
+    });
+    // Create the game using the players in the lobby
+    lobby.players = lobby.players.map(p => p.id);
+    const game = await createGame(lobby);  // Assuming the createGame function uses the lobby details to create the game
+    // After creating the game, delete the lobby
+    await prisma.lobby.delete({
+      where: { id: lobbyId },
+    });
+    await updateLobbyList(io);
+
+    return res.status(200).json({ message: "Lobby started and game created", game });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error starting lobby', error });
+  }
+};
 
 export const deleteLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
   const { id } = req.params;

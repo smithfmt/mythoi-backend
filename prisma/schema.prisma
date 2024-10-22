@@ -24,6 +24,8 @@ model User {
 
   lobbyId   Int? 
   lobby     Lobby?   @relation(fields: [lobbyId], references: [id])
+  gameId    Int?
+  game      Game?    @relation(fields: [gameId], references: [id]) 
 }
 
 model Lobby {
@@ -34,4 +36,15 @@ model Lobby {
   players   User[]
   maxPlayers Int     @default(2)
   host      Int
+}
+
+model Game {
+  id         Int      @id @default(autoincrement())
+  name       String
+  createdAt  DateTime @default(now())
+  players    User[]
+  host       String
+  turn       String
+  playerData Json
+  drawnHeroes String[]
 }
