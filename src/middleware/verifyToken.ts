@@ -37,7 +37,6 @@ export const verifyToken = (req: AuthenticatedRequest, res: Response, next: Next
       console.log("ERROR VERIFYING TOKEN")
       return res.status(401).json({ error: 'Unauthorized: Token verification failed' });
     }
-
     req.body.user = decoded as DecodedToken;
     next();
   });

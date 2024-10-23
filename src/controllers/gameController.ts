@@ -1,7 +1,6 @@
 import { Response } from "express";
 import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
-import { Server } from "socket.io";
 
 export const createGame = async (lobby: any) => {
   try {
@@ -57,3 +56,14 @@ export const getGame = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(500).json({ message: "Error fetching game", error });
     }
   };
+
+  // Function to delete all games
+export const deleteAllGames = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await prisma.game.deleteMany({});
+    return res.status(200).json({ message: "All games deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error deleting games", error });
+  }
+};
+

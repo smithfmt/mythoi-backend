@@ -3,12 +3,9 @@ import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import { Server } from "socket.io";
 import { createGame } from "./gameController";
+import { updateLobbyList } from "../sockets";
 
-const updateLobbyList = async (io: Server) => {
-    const lobbyData = await prisma.lobby.findMany();
-    const lobbies = lobbyData.map(lobby => !lobby.started?lobby:"");
-    io.emit("lobbyListUpdate", lobbies);
-};
+
 
 // Create a new lobby and add the user to the lobby
 export const createLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
@@ -190,8 +187,8 @@ export const startLobby = async (req: AuthenticatedRequest, res: Response, io: S
       data: { started: true },
     });
     // Create the game using the players in the lobby
-    lobby.players = lobby.players.map(p => p.id);
     const game = await createGame(lobby);  // Assuming the createGame function uses the lobby details to create the game
+    console.log(game)
     // After creating the game, delete the lobby
     await prisma.lobby.delete({
       where: { id: lobbyId },

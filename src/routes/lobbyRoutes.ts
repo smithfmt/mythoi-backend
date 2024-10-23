@@ -12,8 +12,10 @@ export const lobbyRoutes = (io: Server) => {
     router.post('/start', verifyToken, (req, res) => startLobby(req, res, io));
     router.get('/all', verifyToken, getAllLobbies);
     router.get('/:id', verifyToken, getLobby);
-    router.delete('/:id', verifyToken, (req, res) => deleteLobby(req, res, io));
-    router.delete('/deleteAll', verifyToken, (req, res) => deleteAllLobbies(req, res, io));
+    
+    router.delete('/', verifyToken, (req, res) => deleteAllLobbies(req, res, io));
+    
     router.delete('/deleteStarted', verifyToken, (req, res) => deleteStartedLobbies(req, res, io));
+    router.delete('/:id', verifyToken, (req, res) => deleteLobby(req, res, io));
     return router;
 };
