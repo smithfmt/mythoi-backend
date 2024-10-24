@@ -98,9 +98,9 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response) => {
         // Update the player's generals selected field and add the general to their board
         playerData[playerIndex].generals.selected = true;
         playerData[playerIndex].board.push({
-          card: generalId,  // Add the generalId as the card
-          x: 0,
-          y: 0,
+          card: {id: generalId, type: "general"},  // Add the generalId as the card
+          x: 5,
+          y: 5,
         });
 
         // Update the game with the modified playerData
