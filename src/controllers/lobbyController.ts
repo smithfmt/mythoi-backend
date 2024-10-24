@@ -188,14 +188,13 @@ export const startLobby = async (req: AuthenticatedRequest, res: Response, io: S
     });
     // Create the game using the players in the lobby
     const game = await createGame(lobby);  // Assuming the createGame function uses the lobby details to create the game
-    console.log(game)
     // After creating the game, delete the lobby
     await prisma.lobby.delete({
-      where: { id: lobbyId },
+      where: { id: Number(lobbyId) },
     });
     await updateLobbyList(io);
 
-    return res.status(200).json({ message: "Lobby started and game created", game });
+    return res.status(200).json({ message: "Lobby started and game created", game: game.id });
   } catch (error) {
     return res.status(500).json({ message: 'Error starting lobby', error });
   }

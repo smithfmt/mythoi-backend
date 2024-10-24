@@ -1,21 +1,30 @@
 import { Response } from "express";
 import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
+import { generatePlayerGenerals } from "../game/helpers";
+
+
+
 
 export const createGame = async (lobby: any) => {
   try {
     const playerIds = lobby.players.map((player: any) => player.id);
+    const playerGenerals = generatePlayerGenerals(lobby.players.length);
     const game = await prisma.game.create({
       data: {
         name: `Game for ${lobby.name}`,
         players: { connect: playerIds.map((id: number) => ({ id })) },
-        host: lobby.host.toString(), // Assuming host is a User ID stored as an integer
-        turn: lobby.players[0].name, // Assuming the first player takes the first turn
+        host: lobby.host.toString(), 
+        turn: lobby.players[0].name, 
         drawnHeroes: [],
         playerData: JSON.stringify(
-          lobby.players.map((player: any) => ({
-            player: player.name,
-            board: [], // Initialize an empty board for each player
+          lobby.players.map((player: any, i:number) => ({
+            player: player.id,
+            generals: {
+              selected: false,
+              choices: playerGenerals[i],
+            },
+            board: [], 
             basicCount: 0,
           }))
         ),
