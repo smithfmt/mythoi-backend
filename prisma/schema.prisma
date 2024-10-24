@@ -44,7 +44,7 @@ model Game {
   createdAt  DateTime @default(now())
   players    User[]
   host       String
-  turn       String
+  turn       Int
   playerData Json
   drawnHeroes String[]
 }

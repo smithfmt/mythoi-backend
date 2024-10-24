@@ -1,10 +1,13 @@
-type PlayerData = {
-    player: string,
-    general: string,
-    board : {
+export interface PlayerData {
+    player: number;
+    board: {
         card: string,
         x: number,
         y: number,
-    }[],
-    basicCount: number,
-};
+    }[];
+    generals: {
+        selected: boolean,
+        choices: number[],
+    },
+    basicCount: number;
+}
