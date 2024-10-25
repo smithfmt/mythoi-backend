@@ -88,8 +88,11 @@ export const getAllGames = async (req: AuthenticatedRequest, res: Response) => {
 
 export const updateGame = async (req: AuthenticatedRequest, res: Response, io: Server) => {
   const { id } = req.params; 
-  const userId = req.body.user.id
+  const userId = parseInt(req.body.user.id);
   const gameId = parseInt(id, 10);
+
+
+
   if (isNaN(gameId)) {
     return res.status(400).json({ message: "Invalid game ID" });
   }
@@ -112,7 +115,7 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
     let updatedGame;
     let playerData: PlayerData[] = JSON.parse(game.playerData as string);
     let playerIndex:number | undefined;
-    playerData.forEach((p,i) => playerIndex = p.player===userId ? i : undefined);
+    playerData.forEach((p,i) => p.player===userId && (playerIndex = i));
     if (playerIndex===undefined) return res.status(404).json({ message: "Player not found" });
     switch (action) {
       case 'selectGeneral':

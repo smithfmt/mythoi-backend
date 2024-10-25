@@ -3,7 +3,7 @@ import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import { Server } from "socket.io";
 import { createGame } from "./gameController";
-import { updateLobbyData, updateLobbyList } from "../sockets";
+import { updateGameList, updateLobbyData, updateLobbyList } from "../sockets";
 
 // Create a new lobby and add the user to the lobby
 export const createLobby = async (req: AuthenticatedRequest, res: Response, io: Server) => {
@@ -194,6 +194,7 @@ export const startLobby = async (req: AuthenticatedRequest, res: Response, io: S
     });
     
     updateLobbyList(io);
+    updateGameList(io);
     
     return res.status(200).json({ message: "Lobby started and game created", game: game.id });
   } catch (error) {
