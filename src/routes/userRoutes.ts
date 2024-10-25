@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { signupUser, loginUser, getUserProfile } from "../controllers/userController";
+import { signupUser, loginUser, getUserProfile, getAllUsers } from "../controllers/userController";
 import { verifyToken } from "../middleware/verifyToken";
 import { Server } from "socket.io";
 
@@ -9,5 +9,6 @@ export const userRoutes = (io: Server) => {
   router.post("/signup", (req, res) => signupUser(req, res, io));
   router.post("/login", loginUser);
   router.get("/profile", verifyToken, getUserProfile);
+  router.get("/all", verifyToken, getAllUsers);
   return router;
 };

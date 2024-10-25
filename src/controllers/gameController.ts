@@ -3,6 +3,8 @@ import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import { generatePlayerGenerals } from "../game/helpers";
 import { PlayerData } from "../data/types";
+import { updateGameData } from "../sockets";
+import { Server } from "socket.io";
 
 
 export const createGame = async (lobby: any) => {
@@ -63,7 +65,28 @@ export const getGame = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const updateGame = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllGames = async (req: AuthenticatedRequest, res: Response) => {
+
+  try {
+    // Fetch the game by its ID, including related players and playerData
+    const games = await prisma.game.findMany({
+      include: {
+        players: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },  // Include player details in the response
+      },
+    });
+
+    return res.status(200).json(games);
+  } catch (error) {
+    return res.status(500).json({ message: "Error fetching game", error });
+  }
+};
+
+export const updateGame = async (req: AuthenticatedRequest, res: Response, io: Server) => {
   const { id } = req.params; 
   const userId = req.body.user.id
   const gameId = parseInt(id, 10);
@@ -115,7 +138,7 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response) => {
       default:
         return res.status(400).json({ message: "Invalid action" });
     }
-
+    updateGameData(io, gameId)
     return res.status(200).json(updatedGame);
   } catch (error) {
     console.error("Error updating game:", error);

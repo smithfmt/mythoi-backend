@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { Server } from "socket.io";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import dotenv from "dotenv";
+import { updateUserList } from "../sockets";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -30,9 +31,8 @@ export const signupUser = async (req: Request, res: Response, io: Server) => {
         password: hashedPassword,
       },
     });
-    const users = await prisma.user.findMany();
-    const userNames = users.map((user) => user.name);
-    io.emit("userListUpdate", userNames);
+
+    updateUserList(io);
 
     const token = jwt.sign(
       {
@@ -40,7 +40,7 @@ export const signupUser = async (req: Request, res: Response, io: Server) => {
         email: user.email,
       },
       JWT_SECRET,
-      { expiresIn: "24h" } 
+      { expiresIn: "100h" } 
     );
 
     return res.status(201).json({
@@ -80,7 +80,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
     
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-      expiresIn: '24h',
+      expiresIn: '100h',
     });
 
     return res.status(200).json({ message: "Login successful", token });
@@ -110,6 +110,26 @@ export const getUserProfile = async (req: AuthenticatedRequest, res: Response) =
     }
 
     return res.status(200).json({ message: "User profile retrieved", profile });
+  } catch (error) {
+    return res.status(500).json({ message: "An unexpected error occurred" });
+  }
+};
+
+export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
+  const { user } = req.body;
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    return res.status(200).json({ message: "All Users", users });
   } catch (error) {
     return res.status(500).json({ message: "An unexpected error occurred" });
   }

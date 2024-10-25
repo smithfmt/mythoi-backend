@@ -47,4 +47,5 @@ model Game {
   turn       Int
   playerData Json
   drawnHeroes String[]
+  finished   Boolean  @default(false)
 }
