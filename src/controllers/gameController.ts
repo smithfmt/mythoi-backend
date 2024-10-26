@@ -5,6 +5,7 @@ import { generatePlayerGenerals } from "../game/helpers";
 import { PlayerData } from "../data/types";
 import { updateGameData } from "../sockets";
 import { Server } from "socket.io";
+import { generateCard } from "../game/cardUtils";
 
 
 export const createGame = async (lobby: any) => {
@@ -124,7 +125,7 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
         // Update the player's generals selected field and add the general to their board
         playerData[playerIndex].generals.selected = true;
         playerData[playerIndex].board.push({
-          card: {id: generalId, type: "general"},  // Add the generalId as the card
+          card: generateCard({id: generalId, type: "general"}),  // Add the generalId as the card
           x: 5,
           y: 5,
         });
