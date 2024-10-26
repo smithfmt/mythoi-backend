@@ -3,22 +3,25 @@ import prisma from "../prismaClient";
 import { AuthenticatedRequest } from "../middleware/verifyToken";
 import { generatePlayerGenerals } from "../game/helpers";
 import { PlayerData } from "../data/types";
+import { cards } from "../data/cards";
 import { updateGameData } from "../sockets";
 import { Server } from "socket.io";
-import { generateCard } from "../game/cardUtils";
+import { drawRandomCard, generateCard } from "../game/cardUtils";
+import { shuffle } from "../utils";
 
 
 export const createGame = async (lobby: any) => {
   try {
     const playerIds = lobby.players.map((player: any) => player.id);
     const playerGenerals = generatePlayerGenerals(lobby.players.length);
+    const heroDeck:number[] = shuffle(Object.keys(cards.hero).map(str => parseInt(str)));
     const game = await prisma.game.create({
       data: {
         name: `Game for ${lobby.name}`,
         players: { connect: playerIds.map((id: number) => ({ id })) },
         host: lobby.host.toString(), 
         turn: lobby.players[0].id, 
-        drawnHeroes: [],
+        heroDeck,
         playerData: JSON.stringify(
           lobby.players.map((player: any, i:number) => ({
             player: player.id,
@@ -125,11 +128,16 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
         // Update the player's generals selected field and add the general to their board
         playerData[playerIndex].generals.selected = true;
         playerData[playerIndex].board.push({
-          card: generateCard({id: generalId, type: "general"}),  // Add the generalId as the card
+          card: generateCard(cards.general[generalId]),  // Add the generalId as the card
           x: 5,
           y: 5,
         });
 
+        const startingCards = [];
+        for (let i=0;i<(generalId===4?5:3);i++) {
+          startingCards.push(generateCard(drawRandomCard()))
+        }
+        playerData[playerIndex].hand = startingCards
         // Update the game with the modified playerData
         updatedGame = await prisma.game.update({
           where: { id: gameId },

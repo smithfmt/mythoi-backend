@@ -12,7 +12,7 @@ export interface PlayerData {
         x: number,
         y: number,
     }[];
-    hand: CardType[],
+    hand: PopulatedCardData[],
     generals: {
         selected: boolean,
         choices: number[],
@@ -22,7 +22,7 @@ export interface PlayerData {
 
 export type CardData = {
     id: number;
-    img: string;
+    img: string | string[];
     name: string;
     atk: number;
     hp: number;
@@ -35,6 +35,7 @@ export type CardData = {
     style: string;
     cost: number;
     desc: string;
+    weight?: number;
 };
   
 export type CardsObject = {
