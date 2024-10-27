@@ -122,7 +122,7 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
     playerData.forEach((p,i) => p.player===userId && (playerIndex = i));
     if (playerIndex===undefined) return res.status(404).json({ message: "Player not found" });
     switch (action) {
-      case 'selectGeneral':
+      case "selectGeneral":
         if (playerData[playerIndex].generals.selected) return res.status(401).json({ message: "Already Selected General" });
         const { generalId } = data;
         // Update the player's generals selected field and add the general to their board
@@ -146,7 +146,14 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
           },
         });
         break;
-
+      case "placeCard":
+        updatedGame = await prisma.game.update({
+          where: { id: gameId },
+          data: {
+            playerData: JSON.stringify(playerData),  // Save the updated playerData back as JSON
+          },
+        });
+        break
       default:
         return res.status(400).json({ message: "Invalid action" });
     }
