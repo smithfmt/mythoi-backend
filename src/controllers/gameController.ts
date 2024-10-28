@@ -13,7 +13,7 @@ import { findIndexByParam, shuffle } from "../utils";
 export const createGame = async (lobby: any) => {
   try {
     const playerIds = lobby.players.map((player: any) => player.id);
-    const playerGenerals = generatePlayerGenerals(lobby.players.length);
+    const playerGenerals = generatePlayerGenerals(lobby.players.length).map(arr => arr.map(genId => generateCard(cards.general[genId])));
     const heroDeck:number[] = shuffle(Object.keys(cards.hero).map(str => parseInt(str)));
     const game = await prisma.game.create({
       data: {
@@ -126,17 +126,17 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
     switch (action) {
       case "selectGeneral":
         if (currentPlayerData.generals.selected) return res.status(401).json({ message: "Already Selected General" });
-        const { generalId } = data;
+        const { generalCard } = data;
         // Update the player's generals selected field and add the general to their board
         currentPlayerData.generals.selected = true;
         currentPlayerData.cards.push({
-          card: generateCard(cards.general[generalId]),  // Add the generalId as the card
+          card: generalCard,  // Add the generalId as the card
           x: 5,
           y: 5,
         });
 
         const startingCards = [];
-        for (let i=0;i<(generalId===4?5:3);i++) {
+        for (let i=0;i<(generalCard.id===4?5:3);i++) {
           startingCards.push({card: generateCard(drawRandomCard()), hand: true})
         }
         currentPlayerData.cards = [...currentPlayerData.cards, ...startingCards]
