@@ -5,3 +5,23 @@ export function shuffle(array:any[]) {
     }
     return array;
 }
+
+export function findIndexByParam (array:any[], key:string[], param:any) {
+    let index:number | undefined;
+    
+    switch (key.length) {
+        case 1:
+            array.forEach((item,i) => item[key[0]]===param && (index = i));
+            break;
+        case 2:
+            array.forEach((item,i) => item[key[0]][key[1]]===param && (index = i));
+            break;
+        case 3:
+            array.forEach((item,i) => item[key[0]][key[1]][key[2]]===param && (index = i));
+            break;
+        default:
+            break;
+    }
+    
+    return index;
+};

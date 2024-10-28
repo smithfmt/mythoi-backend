@@ -7,7 +7,7 @@ import { cards } from "../data/cards";
 import { updateGameData } from "../sockets";
 import { Server } from "socket.io";
 import { drawRandomCard, generateCard } from "../game/cardUtils";
-import { shuffle } from "../utils";
+import { findIndexByParam, shuffle } from "../utils";
 
 
 export const createGame = async (lobby: any) => {
@@ -29,7 +29,7 @@ export const createGame = async (lobby: any) => {
               selected: false,
               choices: playerGenerals[i],
             },
-            board: [], 
+            cards: [],
             basicCount: 0,
           }))
         ),
@@ -118,16 +118,18 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
 
     let updatedGame;
     let playerData: PlayerData[] = JSON.parse(game.playerData as string);
-    let playerIndex:number | undefined;
-    playerData.forEach((p,i) => p.player===userId && (playerIndex = i));
+
+    const playerIndex = findIndexByParam(playerData,["player"],userId);
     if (playerIndex===undefined) return res.status(404).json({ message: "Player not found" });
+    const currentPlayerData = playerData[playerIndex];
+  
     switch (action) {
       case "selectGeneral":
-        if (playerData[playerIndex].generals.selected) return res.status(401).json({ message: "Already Selected General" });
+        if (currentPlayerData.generals.selected) return res.status(401).json({ message: "Already Selected General" });
         const { generalId } = data;
         // Update the player's generals selected field and add the general to their board
-        playerData[playerIndex].generals.selected = true;
-        playerData[playerIndex].board.push({
+        currentPlayerData.generals.selected = true;
+        currentPlayerData.cards.push({
           card: generateCard(cards.general[generalId]),  // Add the generalId as the card
           x: 5,
           y: 5,
@@ -135,9 +137,9 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
 
         const startingCards = [];
         for (let i=0;i<(generalId===4?5:3);i++) {
-          startingCards.push(generateCard(drawRandomCard()))
+          startingCards.push({card: generateCard(drawRandomCard()), hand: true})
         }
-        playerData[playerIndex].hand = startingCards
+        currentPlayerData.cards = [...currentPlayerData.cards, ...startingCards]
         // Update the game with the modified playerData
         updatedGame = await prisma.game.update({
           where: { id: gameId },
@@ -147,6 +149,15 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
         });
         break;
       case "placeCard":
+        const { uid, space } = data;
+        const { x=null, y=null, hand } = space;
+
+        const cardIndex = findIndexByParam(currentPlayerData.cards, ["card", "uid"], uid)
+        if (cardIndex===undefined) return res.status(404).json({ message: "Card not found" });
+        const currentCard = currentPlayerData.cards[cardIndex];
+
+        Object.assign(currentCard, { x, y, hand });
+
         updatedGame = await prisma.game.update({
           where: { id: gameId },
           data: {

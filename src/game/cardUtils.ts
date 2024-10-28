@@ -1,6 +1,7 @@
 import { cards } from "../data/cards";
-import { Attribute, CardData, CardType, PopulatedCardData } from "../data/types";
+import { Attribute, CardData, PopulatedCardData } from "../data/types";
 import { shuffle } from "../utils";
+import { v4 as uuidv4 } from 'uuid';
 
 export const fillConnections = (array:any[]) => {
     while (array.length<4) {
@@ -89,7 +90,7 @@ export const generateCard = (card:CardData) => {
     const image = type==="basic" ? img[Math.floor(Math.random()*img.length)]: img as string;
 
     const populatedCard: PopulatedCardData = {
-        id, img:image, name, atk, hp, ability, style, desc, type,
+        id, uid: uuidv4(),img:image, name, atk, hp, ability, style, desc, type,
         sides, cost: costs,
     };
     return populatedCard;
