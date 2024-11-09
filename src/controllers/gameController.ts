@@ -95,8 +95,6 @@ export const updateGame = async (req: AuthenticatedRequest, res: Response, io: S
   const userId = parseInt(req.body.user.id);
   const gameId = parseInt(id, 10);
 
-
-
   if (isNaN(gameId)) {
     return res.status(400).json({ message: "Invalid game ID" });
   }
