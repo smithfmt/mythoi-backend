@@ -1,17 +1,25 @@
 import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData } from "../sockets/socketHandlers";
 import { Server } from "socket.io";
 import pg from "pg";
+import dotenv from "dotenv";
+dotenv.config();
 
 const { Pool } = pg;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+let client;
+
 export const listenForUpdates = (io: Server) => {
-    pool.connect((err, client) => {
-      if (err || !client) {
+    pool.connect((err, pgClient) => {
+      if (err || !pgClient) {
         console.error("Error connecting to PostgreSQL", err);
+        setTimeout(() => listenForUpdates(io), 5000); // Retry after 5 seconds if connection fails
         return;
       }
+
+      client = pgClient;
+
       console.log("CONNECTED")
       // Listen to PostgreSQL notifications for user, lobby, and game changes
       client.query("LISTEN user_changes");
@@ -20,7 +28,7 @@ export const listenForUpdates = (io: Server) => {
 
       // Trigger specific update functions based on notification payloads
       client.on("notification", (msg) => {
-        console.log("NOTIFICATION", msg)
+        console.log("NOTIFICATION", msg.channel)
         const payload = msg.payload ? JSON.parse(msg.payload) : null;
 
         switch (msg.channel) {
@@ -53,6 +61,12 @@ export const listenForUpdates = (io: Server) => {
           default:
             console.warn(`Unrecognized channel: ${msg.channel}`);
         }
+      });
+
+      client.on("error", (err) => {
+        console.error("PostgreSQL error:", err);
+        // Retry connection after an error
+        listenForUpdates(io);
       });
     });
   };

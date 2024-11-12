@@ -23,7 +23,7 @@ export const updateLobbyList = async (io: Server) => {
     },
   });
   const lobbies = lobbyData.map((lobby) => (!lobby.started ? lobby : ""));
-  io.emit("lobbyListUpdate", lobbies);
+  io.emit("lobbyListUpdate", { data: { lobbies } });
 };
 
 // Emit updated data for a specific lobby with players and optional game ID

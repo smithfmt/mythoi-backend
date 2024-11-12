@@ -1,0 +1,3 @@
+docker exec -it PostgresCont psql -U freddie -d postgres
+
+\i /docker-entrypoint-initdb.d/triggers.sql;
