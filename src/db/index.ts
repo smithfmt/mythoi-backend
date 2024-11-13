@@ -1,4 +1,4 @@
-import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData } from "../sockets/socketHandlers";
+import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData, updateUserData } from "../sockets/socketHandlers";
 import { Server } from "socket.io";
 import pg from "pg";
 import dotenv from "dotenv";
@@ -35,6 +35,8 @@ export const listenForUpdates = (io: Server) => {
           case "user_changes":
             if (payload && (payload.action === "INSERT" || payload.action === "DELETE")) {
               updateUserList(io);
+            } else if (payload.action === "UPDATE") {
+              updateUserData(io, payload.id);
             }
             break;
 

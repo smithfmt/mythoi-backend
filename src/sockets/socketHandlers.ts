@@ -3,15 +3,27 @@ import prisma from "../prismaClient";
 
 // Emit an updated list of user names
 export const updateUserList = async (io: Server) => {
-    console.log("Updating User List");
   const users = await prisma.user.findMany();
   const userNames = users.map((user) => user.name);
   io.emit("userListUpdate", userNames);
 };
 
+export const updateUserData = async (io: Server, userId: number) => {
+  const userData = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      gameData: true,
+      lobbyId: true,
+      gameId: true,
+    }
+  });
+  io.emit(`userDataUpdate-${userId}`, userData);
+}
+
 // Emit an updated list of lobbies with players and status
 export const updateLobbyList = async (io: Server) => {
-    console.log("Updating Lobby List");
   const lobbyData = await prisma.lobby.findMany({
     include: {
       players: {
@@ -44,7 +56,6 @@ export const updateLobbyData = async (io: Server, lobbyId: number, gameId?: numb
 
 // Emit an updated list of games
 export const updateGameList = async (io: Server) => {
-    console.log("Updating Game List");
   const games = await prisma.game.findMany();
   io.emit("gameListUpdate", games);
 };
@@ -64,3 +75,4 @@ export const updateGameData = async (io: Server, gameId: number) => {
   });
   io.emit(`gameDataUpdate-${gameId}`, gameData);
 };
+
