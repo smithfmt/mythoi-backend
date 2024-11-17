@@ -45,6 +45,7 @@ export const listenForUpdates = (io: Server) => {
               if (payload.action === "INSERT" || payload.action === "DELETE") {
                 updateLobbyList(io);
               } else if (payload.action === "UPDATE") {
+                console.log("UPDATING LOBBY")
                 updateLobbyData(io, payload.id);
               }
             }
