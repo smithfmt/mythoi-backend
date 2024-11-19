@@ -49,6 +49,11 @@ export const updateLobbyData = async (io: Server, lobbyId: number, gameId?: numb
           name: true,
         },
       },
+      game: {
+        select: {
+          id: true,
+        }
+      }
     },
   });
   io.emit(`lobbyDataUpdate-${lobbyId}`, { ...lobbyData, gameId });
