@@ -14,9 +14,8 @@ export const updateUserData = async (io: Server, userId: number) => {
     select: {
       id: true,
       name: true,
-      gameData: true,
       lobbyId: true,
-      gameId: true,
+      player: true,
     }
   });
   io.emit(`userDataUpdate-${userId}`, userData);
@@ -70,12 +69,7 @@ export const updateGameData = async (io: Server, gameId: number) => {
   const gameData = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      players: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+      players: true,
     },
   });
   io.emit(`gameDataUpdate-${gameId}`, gameData);
