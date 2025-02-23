@@ -1,4 +1,4 @@
-import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData, updateUserData } from "../sockets/socketHandlers";
+import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData, updateUserData, updatePlayerData, updateBattleData } from "../sockets/socketHandlers";
 import { Server } from "socket.io";
 import pg from "pg";
 import dotenv from "dotenv";
@@ -25,6 +25,8 @@ export const listenForUpdates = (io: Server) => {
       client.query("LISTEN user_changes");
       client.query("LISTEN lobby_changes");
       client.query("LISTEN game_changes");
+      client.query("LISTEN player_changes");
+      client.query("LISTEN battle_changes");
 
       // Trigger specific update functions based on notification payloads
       client.on("notification", (msg) => {
@@ -45,7 +47,6 @@ export const listenForUpdates = (io: Server) => {
               if (payload.action === "INSERT" || payload.action === "DELETE") {
                 updateLobbyList(io);
               } else if (payload.action === "UPDATE") {
-                console.log("UPDATING LOBBY")
                 updateLobbyData(io, payload.id);
               }
             }
@@ -57,6 +58,26 @@ export const listenForUpdates = (io: Server) => {
                 updateGameList(io);
               } else if (payload.action === "UPDATE") {
                 updateGameData(io, payload.id);
+              }
+            }
+            break;
+
+          case "player_changes":
+            if (payload) {
+              if (payload.action === "INSERT" || payload.action === "DELETE") {
+                // updateGameList(io);
+              } else if (payload.action === "UPDATE") {
+                updatePlayerData(io, payload.id);
+              }
+            }
+            break;
+            
+          case "battle_changes":
+            if (payload) {
+              if (payload.action === "INSERT" || payload.action === "DELETE") {
+                // updateGameList(io);
+              } else if (payload.action === "UPDATE") {
+                updateBattleData(io, payload.id);
               }
             }
             break;

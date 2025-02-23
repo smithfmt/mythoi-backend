@@ -57,3 +57,41 @@ DROP TRIGGER IF EXISTS game_update_trigger ON "Game";
 CREATE TRIGGER game_update_trigger
 AFTER INSERT OR UPDATE OR DELETE ON "Game"
 FOR EACH ROW EXECUTE FUNCTION notify_game_update();
+
+-- TRIGGER FUNCTION FOR PLAYER UPDATES
+CREATE OR REPLACE FUNCTION notify_player_update() 
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM pg_notify('player_changes', json_build_object(
+    'action', TG_OP,
+    'id', NEW.id
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRIGGER FOR PLAYER UPDATES
+DROP TRIGGER IF EXISTS player_update_trigger ON "Player";
+CREATE TRIGGER player_update_trigger
+AFTER INSERT OR UPDATE OR DELETE ON "Player"
+FOR EACH ROW EXECUTE FUNCTION notify_player_update();
+
+-- TRIGGER FUNCTION FOR BATTLE UPDATES
+CREATE OR REPLACE FUNCTION notify_battle_update() 
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM pg_notify('battle_changes', json_build_object(
+    'action', TG_OP,
+    'id', NEW.id
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRIGGER FOR BATTLE UPDATES
+DROP TRIGGER IF EXISTS battle_update_trigger ON "Battle";
+CREATE TRIGGER battle_update_trigger
+AFTER INSERT OR UPDATE OR DELETE ON "Battle"
+FOR EACH ROW EXECUTE FUNCTION notify_battle_update();
+
+
