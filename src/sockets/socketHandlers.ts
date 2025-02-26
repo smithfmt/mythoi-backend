@@ -78,6 +78,9 @@ export const updateGameData = async (io: Server, gameId: number) => {
 export const updatePlayerData = async (io: Server, playerId: number) => {
   const playerData = await prisma.player.findUnique({
     where: { id: playerId },
+    include: {
+      cards: true,
+    }
   });
   io.emit(`playerDataUpdate-${playerId}`, playerData);
 };
