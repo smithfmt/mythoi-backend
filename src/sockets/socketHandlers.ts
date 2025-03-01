@@ -72,7 +72,13 @@ export const updateGameData = async (io: Server, gameId: number) => {
       players: true,
     },
   });
-  io.emit(`gameDataUpdate-${gameId}`, gameData);
+  const heroShopCards = await prisma.card.findMany({
+    where: {
+      inHeroShop: true,
+      inDiscardPile: false,
+    },
+  });
+  io.emit(`gameDataUpdate-${gameId}`, { heroShop: heroShopCards, ...gameData });
 };
 
 export const updatePlayerData = async (io: Server, playerId: number) => {
@@ -92,3 +98,9 @@ export const updateBattleData = async (io: Server, battleId: number) => {
   io.emit(`battleDataUpdate-${battleId}`, battleData);
 };
 
+export const updateCardData = async (io: Server, cardId: number) => {
+  const cardData = await prisma.card.findUnique({
+    where: { id: cardId },
+  });
+  if (cardData && cardData.playerId) updatePlayerData(io, cardData.playerId)
+}

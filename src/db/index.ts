@@ -1,4 +1,4 @@
-import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData, updateUserData, updatePlayerData, updateBattleData } from "../sockets/socketHandlers";
+import { updateUserList, updateLobbyList, updateGameList, updateGameData, updateLobbyData, updateUserData, updatePlayerData, updateBattleData, updateCardData } from "../sockets/socketHandlers";
 import { Server } from "socket.io";
 import pg from "pg";
 import dotenv from "dotenv";
@@ -27,6 +27,7 @@ export const listenForUpdates = (io: Server) => {
       client.query("LISTEN game_changes");
       client.query("LISTEN player_changes");
       client.query("LISTEN battle_changes");
+      client.query("LISTEN card_changes");
 
       // Trigger specific update functions based on notification payloads
       client.on("notification", (msg) => {
@@ -79,6 +80,14 @@ export const listenForUpdates = (io: Server) => {
               } else if (payload.action === "UPDATE") {
                 updateBattleData(io, payload.id);
               }
+            }
+            break;
+
+          case "card_changes":
+            if (payload) {
+              if (payload.action === "INSERT" || payload.action === "UPDATE") {
+                updateCardData(io, payload.id);
+              } 
             }
             break;
 

@@ -94,4 +94,23 @@ CREATE TRIGGER battle_update_trigger
 AFTER INSERT OR UPDATE OR DELETE ON "Battle"
 FOR EACH ROW EXECUTE FUNCTION notify_battle_update();
 
+-- TRIGGER FUNCTION FOR CARD UPDATES
+CREATE OR REPLACE FUNCTION notify_card_update() 
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM pg_notify('card_changes', json_build_object(
+    'action', TG_OP,
+    'id', NEW.id
+  )::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- TRIGGER FOR CARD UPDATES
+DROP TRIGGER IF EXISTS card_update_trigger ON "Card";
+CREATE TRIGGER card_update_trigger
+AFTER INSERT OR UPDATE OR DELETE ON "Card"
+FOR EACH ROW EXECUTE FUNCTION notify_card_update();
+
+
 
