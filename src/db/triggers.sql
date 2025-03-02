@@ -98,9 +98,15 @@ FOR EACH ROW EXECUTE FUNCTION notify_battle_update();
 CREATE OR REPLACE FUNCTION notify_card_update() 
 RETURNS TRIGGER AS $$
 BEGIN
+  -- PERFORM pg_notify('card_changes', json_build_object(
+  --   'action', TG_OP, 
+  --   'id', CASE WHEN TG_OP = 'DELETE' THEN OLD.id ELSE NEW.id END, 
+  --   'inHeroShop', CASE WHEN OLD.inHeroShop THEN 'true' ELSE 'false' END
+  -- )::text);
   PERFORM pg_notify('card_changes', json_build_object(
-    'action', TG_OP,
-    'id', NEW.id
+    'action', TG_OP, 
+    'new',row_to_json(NEW),
+    'old',row_to_json(OLD)
   )::text);
   RETURN NEW;
 END;

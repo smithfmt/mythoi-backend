@@ -86,7 +86,7 @@ export const listenForUpdates = (io: Server) => {
           case "card_changes":
             if (payload) {
               if (payload.action === "INSERT" || payload.action === "UPDATE") {
-                updateCardData(io, payload.id);
+                updateCardData(io, payload.new.id, payload.old?.inHeroShop);
               } 
             }
             break;

@@ -98,9 +98,10 @@ export const updateBattleData = async (io: Server, battleId: number) => {
   io.emit(`battleDataUpdate-${battleId}`, battleData);
 };
 
-export const updateCardData = async (io: Server, cardId: number) => {
+export const updateCardData = async (io: Server, cardId: number, inHeroShop?: boolean) => {
   const cardData = await prisma.card.findUnique({
     where: { id: cardId },
   });
-  if (cardData && cardData.playerId) updatePlayerData(io, cardData.playerId)
+  if (cardData?.playerId) updatePlayerData(io, cardData.playerId);
+  if (cardData && inHeroShop) updateGameData(io, cardData.gameId);
 }
