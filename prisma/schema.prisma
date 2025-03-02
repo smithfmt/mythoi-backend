@@ -61,6 +61,7 @@ model Game {
   createdAt  DateTime @default(now())
   players    Player[] 
   cards      Card[]
+  battleCards BattleCard[]
   hostId     Int
   turn       Int      @default(1)
   turnOrder  Int[]
@@ -118,6 +119,19 @@ model Battle {
 
 model BattleCard {
   id         Int      @id @default(autoincrement())
+
+  uid        String
+  img        String
+  name       String
+  type       String
+  ability    String
+  style      String
+  cost       String[]
+  desc       String
+  inDiscardPile Boolean @default(false)
+
+  gameId     Int
+  game       Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   playerId   Int
   player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
