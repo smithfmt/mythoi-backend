@@ -69,7 +69,11 @@ export const updateGameData = async (io: Server, gameId: number) => {
   const gameData = await prisma.game.findUnique({
     where: { id: gameId },
     include: {
-      players: true,
+      players: {
+        include: {
+          battleCards: true,
+        },
+      },
     },
   });
   const heroShopCards = await prisma.card.findMany({
