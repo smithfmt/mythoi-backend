@@ -51,6 +51,8 @@ model Player {
   cards      Card[]
   battleCards BattleCard[]
 
+  battleWins Int      @default(0)
+
   generalSelected Boolean @default(false)
   turnEnded Boolean @default(false)
 }
